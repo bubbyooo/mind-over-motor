@@ -4,3 +4,7 @@ Logistic regression classifier that classifies target limb movement based on bra
 X . .
 . . .
 . . X
+
+# Group members:
+Fiona Stern and Beckett O’Reilly
+
