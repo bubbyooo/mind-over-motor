@@ -14,6 +14,11 @@ Our project will address the disconnect between our current understanding of bra
 # Motivation and question:
 We have EEG data for the brainwaves of people with brain damage of varying location and severity. The brainwaves measure the electrical activity while thinking about or actually moving their right and left arms. We would like to predict what type of movement (e.g., limb and direction) is based on these brainwaves. This type of prediction could be used in brain-computer interfaces that could help those who’ve experienced some type of limb limitation due to a brain injury in using that/those limb(s) again.
 
+# Planned deliverables:
+The deliverables will include a Python package containing the data pipeline and the model implementation. With full success, this package will contain everything required to extract the data and train and run the model, ensuring it consistently performs well on unseen data. With partial success, the Python package will contain these elements, but the model doesn’t necessarily perform well on unseen data.
+
+The deliverables will also include a Jupyter notebook where we implement the model to analyze the dataset and apply our evaluation metrics to show the model's performance. With full success, the notebook will contain these elements with an in-depth analysis and proof of strong performance. With partial success, the notebook will display an implementation that might have less-than-ideal performance.
+
 # Resources required
 To complete our project, we will need access to a dataset that contains information about which limb a person is moving and the accompanying EEG signals.  We have found this information in the following dataset: https://doi.org/10.6084/m9.figshare.21679035.  We anticipate that the computing power on our personal computers will be adequate to process the data.  To collaborate with each other, we intend to use GitHub, as specified in the project instructions.  At the moment, we do not foresee the need for additional resources.
 
