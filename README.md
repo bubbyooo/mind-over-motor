@@ -29,3 +29,7 @@ It can be tricky to use EEG outputs as data that can be fed into a machine. Anot
 
 # Ethics Statement:
 If our project is successful and deployed, we would hope that it allows for BCI technology that will allow stroke patients to have greater control over their limbs.  The primary beneficiaries of this technology would be individuals who are recovering from a stroke who do not have full control over both sides of their bodies. Those who do not have access to high-quality healthcare or expensive technologies might be excluded from these benefits.  We do not expect that anyone would be harmed by our project.  Overall, we expect that the world would become a better place if our project is successful.  This conclusion rests on the assumptions that stroke patients’ lives would improve with a greater mind-body connection and that the world is a better place when stroke patients’ lives are improved.
+
+# Timeline:
+After two weeks, at a minimum, we intend to have data in the form of numbers that can be processed and a feature map that might reflect the important weights.  We also intend to have a basic logistic regression machine that outputs a (not necessarily good) prediction.
+After four weeks, we will have reconsidered whether logistic regression is an appropriate algorithm, and will have compared it to another, more complex algorithm of our design.  We will have refined our model (logistic regression or other) and evaluated our model.  At this point, we will have a discussion of our work, choices, and successes/failures.  
