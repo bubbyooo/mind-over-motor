@@ -9,7 +9,7 @@ class Data_Epoch:
     # used ChatGPT assistance to load files properly
     def __init__(self):
         self.dataset = []
-        self.edf_file = []
+        self.edf_files = []
 
     def find_edf_files(self, root_dir):
         for root, dirs, files in os.walk(root_dir):
@@ -17,14 +17,6 @@ class Data_Epoch:
                 if file.endswith(".edf"):
                     self.edf_files.append(os.path.join(root, file))
         return sorted(self.edf_files)
-
-    #checking it worked as intended
-    print('hi')
-    edf_paths = find_edf_files("edffile/")
-    print(len(edf_paths))
-    print(edf_paths[:10])
-    raw = mne.io.read_raw_edf(edf_paths[0], preload=False)
-    print(raw)
 
     def build_dataset(self, root_dir, fs = 500, seconds_per_trial = 8):
         # epoching prep starts here
@@ -57,5 +49,37 @@ class Data_Epoch:
     # at this point, the dataset should contain a collection of trials organized by participant and labeled by outcome
     # from here, we should split by subject (not trial) for training/testing
     # once split, in data-prep-pipeline, we can treat trials individually
+
+    ## showing it works for class:
+
+print("\nAble to load EDF file:")   
+raw = mne.io.read_raw_edf("edffile/sub-01/eeg/sub-01_task-motor-imagery_eeg.edf")
+print(raw) 
+print(raw.get_data().shape)
+
+print("\n Able to segment EDF")   
+epochs = mne.make_fixed_length_epochs(raw, duration=8.0)
+X = epochs.get_data()
+print(X.shape)
+
+print("\n Able extract trial from data")   
+fs = 500
+start = 2*fs
+end = 6*fs
+trials = X[:, :, start:end]
+print(trials.shape)
+
+print("\n Able to label trials")   
+y = torch.arange(len(trials)) % 2
+print(y[:10])
+
+#epoch = Data_Epoch()
+#epoch.find_edf_files("edffile/")
+#edf_paths = epoch.edf_files
+#print(len(edf_paths))
+#print(edf_paths[:10])
+#raw = mne.io.read_raw_edf(edf_paths[0], preload=False)
+#print(raw)
+
 
 
