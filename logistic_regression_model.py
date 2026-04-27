@@ -25,3 +25,15 @@ import torch
 # copied from lecture mar2
 def binary_cross_entropy(q, y):
     return -(y * torch.log(q) + (1-y)*torch.log(1-q)).mean()
+
+
+def sigmoid(z):
+    return 1 / (1 + torch.exp(-z))
+
+# from lecture mar2
+class BinaryLogReg:
+    def __init__(self, n_features):
+        self.w = torch.zeros(n_features, 1)
+
+    def forward(self, X):
+        return sigmoid(X @ self.w)
