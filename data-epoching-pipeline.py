@@ -65,8 +65,8 @@ raw = mne.io.read_raw_edf("edffile/sub-01/eeg/sub-01_task-motor-imagery_eeg.edf"
 #print(raw.get_data().shape)
 #print(raw.annotations)
 print(raw.ch_names)
-raw.compute_psd(fmax=50).plot(picks="data", exclude="bads", amplitude=False)
-raw.plot(duration=5, n_channels=30, block=True)
+#raw.compute_psd(fmax=50).plot(picks="data", exclude="bads", amplitude=False)
+#raw.plot(duration=5, n_channels=30, block=True)
 
 """
 print("\n Able to segment EDF")   
