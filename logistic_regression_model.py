@@ -1,4 +1,5 @@
 from data_epoching_pipeline import Data_Epoch
+from features import build_feature_set
 import random
 
 # basis of logistic regression model
@@ -7,12 +8,13 @@ import random
 
 epoch = Data_Epoch()
 dataset = epoch.build_dataset("edffile")
+print("length of dataset: ", len(dataset))
 ids = list(range(0,49))
 random.seed(42)
 random.shuffle(ids)
 train_ids = ids[:40]
 test_ids = ids[41:]
-train = [x for x in dataset.data if x[2] in train_ids] # from chatgpt
-test = [x for x in dataset.data if x[2] in test_ids] #from chatgpt
-# X_train, y_train = pipeline.transform(train)
-# X_test, y_test = pipeline.transform(test)
+train = [x for x in dataset if x['subject'] in train_ids] # from chatgpt
+test = [x for x in dataset if x['subject'] in test_ids] #from chatgpt
+X_train, y_train = build_feature_set(train)
+X_test, y_test = build_feature_set(test)
