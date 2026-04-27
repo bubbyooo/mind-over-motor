@@ -25,10 +25,16 @@ class Data_Epoch:
         trial_start = int(2*fs)
         trial_end = int(6*fs)
         dataset = []
-        for id, edf_path in enumerate(self.edf_paths):
+        for id, edf_path in enumerate(self.edf_files):
             raw = mne.io.read_raw_edf(edf_path, preload=True)
             raw.pick_types(eeg=True)
-            epochs = mne.make_fixed_length_epochs(raw, duration = samples_per_trial)
+
+            #channels most likely to be relevant to our purposes, can change or expand later
+            raw.pick_channels(['Cz', 'C3', 'C4']) 
+            # filters out slow drifts, high frequency muscle moves, and other possibly eroneous information
+            raw.filter(l_freq=1.0, h_freq=40.0)
+
+            epochs = mne.make_fixed_length_epochs(raw, duration = seconds_per_trial)
             data = epochs.get_data()
             trials = data[:, :, trial_start:trial_end]
             X = torch.tensor(trials, dtype=torch.float32)
@@ -52,11 +58,17 @@ class Data_Epoch:
 
     ## showing it works for class:
 
+
 print("\nAble to load EDF file:")   
 raw = mne.io.read_raw_edf("edffile/sub-01/eeg/sub-01_task-motor-imagery_eeg.edf")
-print(raw) 
-print(raw.get_data().shape)
+#print(raw) 
+#print(raw.get_data().shape)
+#print(raw.annotations)
+print(raw.ch_names)
+raw.compute_psd(fmax=50).plot(picks="data", exclude="bads", amplitude=False)
+raw.plot(duration=5, n_channels=30, block=True)
 
+"""
 print("\n Able to segment EDF")   
 epochs = mne.make_fixed_length_epochs(raw, duration=8.0)
 X = epochs.get_data()
@@ -73,13 +85,15 @@ print("\n Able to label trials")
 y = torch.arange(len(trials)) % 2
 print(y[:10])
 
-#epoch = Data_Epoch()
-#epoch.find_edf_files("edffile/")
-#edf_paths = epoch.edf_files
-#print(len(edf_paths))
-#print(edf_paths[:10])
-#raw = mne.io.read_raw_edf(edf_paths[0], preload=False)
-#print(raw)
+"""
+
+epoch = Data_Epoch()
+epoch.find_edf_files("edffile/")
+edf_paths = epoch.edf_files
+print(len(edf_paths))
+print(edf_paths[:10])
+raw = mne.io.read_raw_edf(edf_paths[0], preload=False)
+print(raw)
 
 
 
