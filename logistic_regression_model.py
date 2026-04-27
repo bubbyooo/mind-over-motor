@@ -52,3 +52,35 @@ class GradientDescentOptimizer:
         grad  = self.grad_func(X, y)
         with torch.no_grad():
             self.model.w -= self.lr * grad
+
+
+def accuracy(model, X, y):
+    with torch.no_grad():
+        preds = (model.forward(X) >= 0.5).float()
+        return (preds == y).float().mean().item()
+
+# Convert to float tensors and make sure y is (N, 1)
+X_train = torch.tensor(X_train, dtype=torch.float32)
+y_train = torch.tensor(y_train, dtype=torch.float32).unsqueeze(1)
+X_test  = torch.tensor(X_test,  dtype=torch.float32)
+y_test  = torch.tensor(y_test,  dtype=torch.float32).unsqueeze(1)
+
+n_features = X_train.shape[1]
+
+model = BinaryLogReg(n_features=n_features)
+opt   = GradientDescentOptimizer(model, lr=.1)
+
+losses = []
+for ep in range(100):
+    q    = model.forward(X_train)
+    loss = binary_cross_entropy(q, y_train)
+    losses.append(loss.item())
+    opt.step(X_train, y_train)
+ 
+    # Claude for epoch reporting
+    if (ep + 1) % 10 == 0:
+        train_acc = accuracy(model, X_train, y_train)
+        print(f"Epoch {ep+1:3d} | loss: {loss.item():.4f} | train acc: {train_acc:.3f}")
+
+test_acc = accuracy(model, X_test, y_test)
+print(f"\nTest accuracy: {test_acc:.3f}")
