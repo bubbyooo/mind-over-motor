@@ -37,3 +37,18 @@ class BinaryLogReg:
 
     def forward(self, X):
         return sigmoid(X @ self.w)
+    
+# from lecture mar2
+class GradientDescentOptimizer:
+    def __init__(self, model, lr=.1):
+        self.model = model
+        self.lr = lr
+
+    def grad_func(self, X, y):
+        q = self.model.forward(X)
+        return 1 / X.shape[0] * ((q - y).T @ X).T
+    
+    def step(self, X, y):
+        grad  = self.grad_func(X, y)
+        with torch.no_grad():
+            self.model.w -= self.lr * grad
