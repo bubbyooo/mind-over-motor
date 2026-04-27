@@ -18,3 +18,10 @@ train = [x for x in dataset if x['subject'] in train_ids] # from chatgpt
 test = [x for x in dataset if x['subject'] in test_ids] #from chatgpt
 X_train, y_train = build_feature_set(train)
 X_test, y_test = build_feature_set(test)
+
+
+import torch
+
+# copied from lecture mar2
+def binary_cross_entropy(q, y):
+    return -(y * torch.log(q) + (1-y)*torch.log(1-q)).mean()
