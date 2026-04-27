@@ -51,7 +51,7 @@ class Data_Epoch:
                     "y": target,
                     "subject": id
             })
-        return pd.DataFrame(self.dataset)
+        return self.dataset
 
     # at this point, the dataset should contain a collection of trials organized by participant and labeled by outcome
     # from here, we should split by subject (not trial) for training/testing
@@ -60,12 +60,12 @@ class Data_Epoch:
     ## showing it works for class:
 
 
-print("\nAble to load EDF file:")   
-raw = mne.io.read_raw_edf("edffile/sub-01/eeg/sub-01_task-motor-imagery_eeg.edf")
+# print("\nAble to load EDF file:")   
+# raw = mne.io.read_raw_edf("edffile/sub-01/eeg/sub-01_task-motor-imagery_eeg.edf")
 #print(raw) 
 #print(raw.get_data().shape)
 #print(raw.annotations)
-print(raw.ch_names)
+# print(raw.ch_names)
 #raw.compute_psd(fmax=50).plot(picks="data", exclude="bads", amplitude=False)
 #raw.plot(duration=5, n_channels=30, block=True)
 
@@ -86,7 +86,7 @@ print("\n Able to label trials")
 y = torch.arange(len(trials)) % 2
 print(y[:10])
 
-"""
+
 
 epoch = Data_Epoch()
 epoch.find_edf_files("edffile/")
@@ -95,6 +95,7 @@ print(len(edf_paths))
 print(edf_paths[:10])
 raw = mne.io.read_raw_edf(edf_paths[0], preload=False)
 print(raw)
+"""
 
 
 
