@@ -26,6 +26,8 @@ def subject_split(dataset, train_ids, test_ids):
     return train, test
 
 def random_split(dataset, frac = .9, random = 42):
-    train = dataset.sample(frac=.8, random_state=42).index
-    test = dataset.drop(train.index)
+    indices = list(range(len(dataset)))
+    train_idx = set(random.sample(indices, k=int(len(dataset) * frac)))
+    train = [x for x in dataset if x['subject'] in set(train_idx)]
+    test = [x for x in dataset if x['subject'] not in set(train_idx)]    
     return train, test
