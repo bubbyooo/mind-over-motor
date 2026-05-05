@@ -8,7 +8,9 @@ from features import build_feature_matrix
 import random
 import torch.optim as optim
 import matplotlib.pyplot as plt
-from dataset import random_split
+from dataset import random_split, subject_split
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
 
 # plans to improve
 # 1. work in batching to reduce overfitting
@@ -23,15 +25,17 @@ class ConvNet(nn.Module):
         super().__init__()
 
         self.pipeline = torch.nn.Sequential(
-            nn.Conv1d(3, 64, 12),
+            nn.Conv1d(3, 64, kernel_size = 25, padding = 12),
             nn.BatchNorm1d(64),
             nn.MaxPool1d(2),
             ReLU(),
-            nn.Conv1d(64, 32, 3),
+            nn.Dropout(0.25),
+            nn.Conv1d(64, 32, kernel_size = 13, padding = 6),
             nn.BatchNorm1d(32),
             nn.MaxPool1d(2),
             ReLU(),
-            nn.Conv1d(32, 32, 3),
+            nn.Dropout(0.25),
+            nn.Conv1d(32, 32, kernel_size = 9, padding = 4),
             nn.BatchNorm1d(32),
             nn.MaxPool1d(2),
             ReLU(),
@@ -53,7 +57,7 @@ epoch = Data_Epoch()
 dataset = epoch.build_dataset("edffile")
 
 #use random_split from dataset.py to get a random split (not by subject)
-train, test = random_split(dataset)
+train, test = random_split(dataset) #throwaway train/test ids
 
 # what follows is a train test split by subject, which we will temporarily avoid #
 
@@ -109,8 +113,14 @@ print("  std: ", X_train.std().item())
 print("  min: ", X_train.min().item())
 print("  max: ", X_train.max().item())
 
-
 loss_fn = nn.CrossEntropyLoss()
+
+#currently not in use
+def binary_cross_entropy(q, y):
+    # Claude to prevent log(0) numerical issues
+    eps = 1e-8
+    q = torch.clamp(q, eps, 1 - eps)
+    return -(y * torch.log(q) + (1-y)*torch.log(1-q)).mean()
 
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 TRAIN = True
@@ -118,9 +128,13 @@ total_loss = 0
 if TRAIN:
     train_losses = []
     val_losses = []
-    for epoch in range(10):
+    for epoch in range(7): # note performs better with around 5
             optimizer.zero_grad()
             y_pred = model(X_train)
+            print("y_pred shape: ", y_pred.shape)
+            print("y_pred first 10: ", y_pred[:10,1])
+            print("y_train shape: ", y_train.shape)
+
             loss   = loss_fn(y_pred, y_train)
             train_losses.append(loss.item())
             val_y_pred = model(X_test)
@@ -140,7 +154,7 @@ if TRAIN:
     plt.legend()
     plt.show()
 
-    torch.save(model.state_dict(), "eeg_model_rec5.pth")
+    torch.save(model.state_dict(), "eeg_model_rec7.pth")
     print("Model saved!")
 
     # Save whenever we hit a new best
@@ -150,8 +164,25 @@ if TRAIN:
 
 else:
     model = ConvNet()
-    model.load_state_dict(torch.load("eeg_model_recent2.pth"))
+    model.load_state_dict(torch.load("eeg_model_rec5.pth"))
     model.eval()
+
+print("y_test shape: ", y_test.shape)
+preds = model.forward(X_test)
+print("preds shape: ", preds.shape)
+    #print(preds)
+
+#following two lines from chatgpt
+y_true = y_test.cpu().numpy()
+y_pred = preds.argmax(dim=1).detach().cpu().numpy()
+    
+# printing cm
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix")
+plt.show()
 
 
 
