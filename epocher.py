@@ -21,7 +21,8 @@ class Data_Epoch:
 
 
         trial_start = int(2 * fs)  # start of trial in samples
-        trial_end = int(6 * fs)    # end of trial in samples
+        trial_end = int(4 * fs)    # 2 seconds of data per trial
+                                   # relevant information?
 
         for subject_id, edf_path in enumerate(self.edf_files):
             raw = load_raw(edf_path, preload=True)
