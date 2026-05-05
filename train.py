@@ -11,14 +11,13 @@ from logistic_regression_model import BinaryLogReg, GradientDescentOptimizer, bi
 
 import numpy as np
 
-
 DATA_DIR     = "data/edffile"
-SEED         = 42
+SEED         = 14
 N_SUBJECTS   = 49
 N_TRAIN      = 40
-LR           = .1
-EPOCHS       = 1000
-LOG_EVERY    = 10
+LR           = .01
+EPOCHS       = 5000
+LOG_EVERY    = 500
 
 
 def main():
@@ -37,7 +36,6 @@ def main():
     test_ids = subject_ids[N_TRAIN:]
 
     train_data, test_data = subject_split(dataset, train_ids, test_ids)
-    print(f"Train subjects: {train_ids}, Test subjects: {test_ids}")
 
     # Feature extraction
     print("\nExtracting features...")
@@ -50,15 +48,11 @@ def main():
     X_test = X_test.float()
     y_test = y_test.float().unsqueeze(1)
 
-    print(f"Feature matrix shape: {X_train.shape}, Labels shape: {y_train.shape}")
-
     # Model and optimizer
     n_features = X_train.shape[1]
     model = BinaryLogReg(n_features=n_features)
     opt   = GradientDescentOptimizer(model, lr=LR)
  
-    # DEBUG
-    print(f"debug: {np.linalg.norm(model.w)}")
 
     # Training loop
     print(f"\nTraining for {EPOCHS} epochs (lr={LR})...")
@@ -75,8 +69,6 @@ def main():
                 f"train acc: {train_acc:.3f}"
             )
  
-    # DEBUG
-    print(f"debug: {np.linalg.norm(model.w)}")
 
     # Evaluation
     test_acc = accuracy(model, X_test, y_test)
