@@ -20,8 +20,15 @@ class EEGDataset(Dataset):
             x = self.transform(x)
         return x, y
     
-
+# Test/train split by subject
 def subject_split(dataset, train_ids, test_ids):
+    # deals with train_ids/test_ids here instead of in train.py
+    subject_ids = list(range(49))
+    random.seed(42)
+    random.shuffle(subject_ids)
+    train_ids = subject_ids[:40]
+    test_ids = subject_ids[40:]
+
     train = [x for x in dataset if x['subject'] in set(train_ids)]
     test = [x for x in dataset if x['subject'] in set(test_ids)]
     return train, test
