@@ -10,6 +10,13 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 from dataset import random_split
 
+# plans to improve
+# 1. work in batching to reduce overfitting
+# 2. add regularizer to reduce overfitting
+# 3. consider/research dropout and weight decay
+# 4. consider return to subject switch
+# 5. comment code etc
+
 #modified from lecture 13 notes
 class ConvNet(nn.Module):
     def __init__(self):
