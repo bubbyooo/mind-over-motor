@@ -8,6 +8,7 @@ from features import build_feature_matrix
 import random
 import torch.optim as optim
 import matplotlib.pyplot as plt
+from dataset import random_split
 
 #modified from lecture 13 notes
 class ConvNet(nn.Module):
@@ -15,16 +16,16 @@ class ConvNet(nn.Module):
         super().__init__()
 
         self.pipeline = torch.nn.Sequential(
-            nn.Conv1d(3, 100, 12),
-            nn.BatchNorm1d(100),
+            nn.Conv1d(3, 64, 12),
+            nn.BatchNorm1d(64),
             nn.MaxPool1d(2),
             ReLU(),
-            nn.Conv1d(100, 50, 3),
-            nn.BatchNorm1d(50),
+            nn.Conv1d(64, 32, 3),
+            nn.BatchNorm1d(32),
             nn.MaxPool1d(2),
             ReLU(),
-            nn.Conv1d(50, 50, 3),
-            nn.BatchNorm1d(50),
+            nn.Conv1d(32, 32, 3),
+            nn.BatchNorm1d(32),
             nn.MaxPool1d(2),
             ReLU(),
             nn.Flatten(),
@@ -43,14 +44,19 @@ def accuracy(model, X, y):
 model = ConvNet()
 epoch = Data_Epoch()
 dataset = epoch.build_dataset("edffile")
-print("length of dataset: ", len(dataset))
-ids = list(range(0,49))
-random.seed(42)
-random.shuffle(ids)
-train_ids = ids[:40]
-test_ids = ids[40:]
-train = [x for x in dataset if x['subject'] in train_ids] # from chatgpt
-test = [x for x in dataset if x['subject'] in test_ids] #from chatgpt
+
+#use random_split from dataset.py to get a random split (not by subject)
+train, test = random_split(dataset)
+
+# what follows is a train test split by subject, which we will temporarily avoid #
+
+# ids = list(range(0,49))
+# random.seed(42)
+# random.shuffle(ids)
+#train_ids = ids[:40]
+#test_ids = ids[40:]
+#train = [x for x in dataset if x['subject'] in train_ids] # from chatgpt
+#test = [x for x in dataset if x['subject'] in test_ids] #from chatgpt
 
 # following four lines from claude
 X_train = torch.stack([item["x"] for item in train])
@@ -100,12 +106,12 @@ print("  max: ", X_train.max().item())
 loss_fn = nn.CrossEntropyLoss()
 
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
-TRAIN = False
+TRAIN = True
 total_loss = 0
 if TRAIN:
     train_losses = []
     val_losses = []
-    for epoch in range(100):
+    for epoch in range(10):
             optimizer.zero_grad()
             y_pred = model(X_train)
             loss   = loss_fn(y_pred, y_train)
@@ -127,7 +133,7 @@ if TRAIN:
     plt.legend()
     plt.show()
 
-    torch.save(model.state_dict(), "eeg_model_recent2.pth")
+    torch.save(model.state_dict(), "eeg_model_rec5.pth")
     print("Model saved!")
 
     # Save whenever we hit a new best
@@ -148,6 +154,6 @@ with torch.no_grad():
     print("Predicted class distribution:", preds.bincount())
     print("Actual class distribution:   ", y_test.bincount())
 
-print("test accuracy: ", accuracy(model, X_test, y_test))
 print("train accuracy: ", accuracy(model, X_train, y_train))
+print("test accuracy: ", accuracy(model, X_test, y_test))
 
