@@ -3,6 +3,7 @@
 
 import torch
 from torch.utils.data import Dataset, DataLoader
+import random
 
 class EEGDataset(Dataset):
     def __init__(self, data, transform=None):
@@ -25,7 +26,8 @@ def subject_split(dataset, train_ids, test_ids):
     test = [x for x in dataset if x['subject'] in set(test_ids)]
     return train, test
 
-def random_split(dataset, frac = .9, random = 42):
+def random_split(dataset, frac = .9, seed = 42):
+    random.seed(seed)
     indices = list(range(len(dataset)))
     train_idx = set(random.sample(indices, k=int(len(dataset) * frac)))
     train = [x for x in dataset if x['subject'] in set(train_idx)]
