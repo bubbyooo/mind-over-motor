@@ -2,6 +2,7 @@
 
 import torch
 from mne.time_frequency import psd_array_welch
+import numpy as np
 
 # Sampling frequency (Hz)
 SFREQ = 500
@@ -43,7 +44,9 @@ def build_feature_matrix(data):
         feature_rows.append(torch.stack(feats))
         labels.append(row['y'])
         
-    X = torch.stack(feature_rows)
+    feature_rows = torch.stack(feature_rows)
+    feature_rows = (feature_rows - torch.mean(feature_rows, dim=0)) / (torch.std(feature_rows, dim=0) + 1e-8)   # standardize features
+    X = feature_rows
     y = torch.tensor(labels, dtype=torch.long)
     return X, y
 
