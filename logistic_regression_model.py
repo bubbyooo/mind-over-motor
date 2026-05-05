@@ -40,7 +40,7 @@ class GradientDescentOptimizer:
 
     def _grad(self, X, y):
         q = self.model.forward(X)
-        return 1 / X.shape[0] * ((q - y).T @ X).T
+        return (1 / X.shape[0]) * X.T @ (q - y)
     
     def step(self, X, y):
         grad  = self._grad(X, y)
