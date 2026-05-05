@@ -24,11 +24,11 @@ def sigmoid(z):
 # from lecture mar2
 class BinaryLogReg:
     def __init__(self, n_features):
-        self.w = torch.zeros(n_features, 1)
+        self.w = torch.randn(n_features, 1) * 0.01  # small random init
+        self.b = torch.zeros(1)  # bias term
 
     def forward(self, X):
-        return sigmoid(X @ self.w)
-    
+        return sigmoid(X @ self.w + self.b)
 
 #---Optimizer---
 
@@ -40,12 +40,16 @@ class GradientDescentOptimizer:
 
     def _grad(self, X, y):
         q = self.model.forward(X)
-        return (1 / X.shape[0]) * X.T @ (q - y)
+        residuals = q - y
+        grad_w = (1 / X.shape[0]) * X.T @ residuals
+        grad_b = residuals.mean()
+        return grad_w, grad_b
     
     def step(self, X, y):
-        grad  = self._grad(X, y)
+        grad_w, grad_b = self._grad(X, y)
         with torch.no_grad():
-            self.model.w -= self.lr * grad
+            self.model.w -= self.lr * grad_w
+            self.model.b -= self.lr * grad_b
 
 
 #---Evaluation---
