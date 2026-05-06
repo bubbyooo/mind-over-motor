@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from dataset import random_split, subject_split
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
+from torch.utils.data import Dataset, DataLoader
+
 
 # plans to improve
 # 1. work in batching to reduce overfitting
@@ -25,17 +27,19 @@ class ConvNet(nn.Module):
         super().__init__()
 
         self.pipeline = torch.nn.Sequential(
-            nn.Conv1d(3, 64, kernel_size = 25, padding = 12),
-            nn.BatchNorm1d(64),
-            nn.MaxPool1d(2),
-            ReLU(),
-            nn.Dropout(0.25),
-            nn.Conv1d(64, 32, kernel_size = 13, padding = 6),
+            nn.Conv1d(3, 32, kernel_size = 25, padding = 12),
             nn.BatchNorm1d(32),
-            nn.MaxPool1d(2),
+            nn.MaxPool1d(4),
             ReLU(),
-            nn.Dropout(0.25),
-            nn.Conv1d(32, 32, kernel_size = 9, padding = 4),
+            nn.Dropout(0.2),
+
+            nn.Conv1d(32, 16, kernel_size = 13, padding = 6),
+            nn.BatchNorm1d(16),
+            nn.MaxPool1d(4),
+            ReLU(),
+            nn.Dropout(0.2),
+
+            nn.Conv1d(16, 32, kernel_size = 9, padding = 4),
             nn.BatchNorm1d(32),
             nn.MaxPool1d(2),
             ReLU(),
@@ -54,7 +58,7 @@ def accuracy(model, X, y):
 
 model = ConvNet()
 epoch = Data_Epoch()
-dataset = epoch.build_dataset("edffile")
+dataset = epoch.build_dataset("edffile", end = 6)
 
 #use random_split from dataset.py to get a random split (not by subject)
 train, test = random_split(dataset) #throwaway train/test ids
@@ -122,29 +126,77 @@ def binary_cross_entropy(q, y):
     q = torch.clamp(q, eps, 1 - eps)
     return -(y * torch.log(q) + (1-y)*torch.log(1-q)).mean()
 
-optimizer = optim.Adam(model.parameters(), lr=0.0001)
+train_loader  = DataLoader(torch.utils.data.TensorDataset(X_train, y_train), batch_size=32, shuffle=True)
+val_loader    = DataLoader(torch.utils.data.TensorDataset(X_test, y_test), batch_size=32, shuffle=False)
+
+
+print("!!sanity check!!")
+# 1. Are your labels actually correct?
+for i in range(5):
+    print(f"sample {i}: label={y_train[i].item()}, shape={X_train[i].shape}")
+
+# 2. Do left and right hand trials actually look different?
+left = X_train[y_train == 0][0]   # first left hand trial
+right = X_train[y_train == 1][0]  # first right hand trial
+
+plt.figure(figsize=(12,4))
+plt.subplot(1,2,1)
+plt.plot(left[0])   # C3 channel
+plt.title("Left hand - C3")
+plt.subplot(1,2,2)
+plt.plot(right[0])  # C3 channel
+plt.title("Right hand - C3")
+plt.show()
+
+optimizer = optim.Adam(model.parameters(), lr=0.000005)
 TRAIN = True
 total_loss = 0
 if TRAIN:
     train_losses = []
     val_losses = []
-    for epoch in range(7): # note performs better with around 5
+    #following 3 lines from claude on patience metric
+    best_val = float('inf')
+    patience = 10
+    strikes = 0
+    for epoch in range(100): # note performs better with around 5
+        train_batch_losses = []
+        val_batch_losses = []
+        for X_batch, y_batch in train_loader:
+            model.train() # per claude makes sure training mode is on (ie with dropout)
             optimizer.zero_grad()
-            y_pred = model(X_train)
-            print("y_pred shape: ", y_pred.shape)
-            print("y_pred first 10: ", y_pred[:10,1])
-            print("y_train shape: ", y_train.shape)
-
-            loss   = loss_fn(y_pred, y_train)
-            train_losses.append(loss.item())
-            val_y_pred = model(X_test)
-            val_loss = loss_fn(val_y_pred, y_test)
-            val_losses.append(val_loss.item())
+            y_pred = model(X_batch)
+            loss   = loss_fn(y_pred, y_batch)
+            train_batch_losses.append(loss.item())
             loss.backward()
             optimizer.step()
-            print("loss: ", loss)
-            print("val loss: ", val_loss)
-            total_loss += loss.item() #claude
+
+            model.eval() #per claude removes dropout
+            with torch.no_grad():
+                val_y_pred = model(X_test)
+                val_loss = loss_fn(val_y_pred, y_test)
+                val_batch_losses.append(val_loss.item())
+        epoch_train_loss = sum(train_batch_losses)/len(train_batch_losses)
+        epoch_val_loss = sum(val_batch_losses)/len(val_batch_losses)
+        train_losses.append(epoch_train_loss)
+        val_losses.append(epoch_val_loss)
+            
+        print("epoch loss: ", loss)
+        print("epoch val loss: ", val_loss, "\n")
+        print('Strikes: ', strikes)
+        # total_loss += loss.item() #claude
+
+        # if__else from claude
+        if val_loss < best_val:
+            best_val = val_loss
+            strikes = 0
+            torch.save(model.state_dict(), "best_model.pth")
+        else:
+            strikes += 1
+            if strikes >= patience:
+                print(f"Early stopping at epoch {epoch}")
+                break
+
+    
   #  if total_loss < best_loss:
      #   best_loss = total_loss
      #   torch.save(model.state_dict(), "eeg_model_best.pth")
@@ -154,7 +206,7 @@ if TRAIN:
     plt.legend()
     plt.show()
 
-    torch.save(model.state_dict(), "eeg_model_rec7.pth")
+    torch.save(model.state_dict(), "eeg_model_rec10.pth")
     print("Model saved!")
 
     # Save whenever we hit a new best
@@ -164,13 +216,18 @@ if TRAIN:
 
 else:
     model = ConvNet()
-    model.load_state_dict(torch.load("eeg_model_rec5.pth"))
+    model.load_state_dict(torch.load("eeg_model_rec8.pth"))
     model.eval()
+
+total = sum(p.numel() for p in model.parameters())
+print(f"Parameters: {total:,}")
 
 print("y_test shape: ", y_test.shape)
 preds = model.forward(X_test)
 print("preds shape: ", preds.shape)
     #print(preds)
+
+print(torch.sigmoid(model(X_test[:10])))
 
 #following two lines from chatgpt
 y_true = y_test.cpu().numpy()
