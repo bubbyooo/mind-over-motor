@@ -15,14 +15,15 @@ class Data_Epoch:
         self.ed_files = []
         self.dataset = []
 
-    def build_dataset(self, root_dir, fs=500, seconds_per_trial=8.0, l_freq = 1.0, h_freq = 40.0):
+    def build_dataset(self, root_dir, fs=500, seconds_per_trial=8.0, l_freq = 1.0, h_freq = 40.0, end = 4):
         self.edf_files = find_edf_files(root_dir)
         self.dataset = []  # reset dataset in case of multiple calls
 
 
         trial_start = int(2 * fs)  # start of trial in samples
-        trial_end = int(4 * fs)    # 2 seconds of data per trial
+        trial_end = int(end * fs)    # 2 seconds of data per trial
                                    # relevant information?
+                                   # for cnn di
 
         for subject_id, edf_path in enumerate(self.edf_files):
             raw = load_raw(edf_path, preload=True)
