@@ -2,22 +2,24 @@
 # Run from project root with `python train.py`
 
 import random
+from xml.parsers.expat import model
 import torch
 
 from epocher import Data_Epoch
 from dataset import subject_split
+from evaluation import plot_confusion_matrix
 from features import build_feature_matrix
 from logistic_regression_model import BinaryLogReg, GradientDescentOptimizer, binary_cross_entropy, accuracy
 
 import numpy as np
 
 DATA_DIR     = "data/edffile"
-SEED         = 14
+SEED         = 42
 N_SUBJECTS   = 49
 N_TRAIN      = 40
-LR           = .01
-EPOCHS       = 5000
-LOG_EVERY    = 500
+LR           = .0003
+EPOCHS       = 185000
+LOG_EVERY    = 10000
 
 
 def main():
@@ -73,6 +75,10 @@ def main():
     # Evaluation
     test_acc = accuracy(model, X_test, y_test)
     print(f"\nTest accuracy: {test_acc:.3f}")
+
+
+    #---Confusion matrix---
+    plot_confusion_matrix(model, X_test, y_test)
  
  
 if __name__ == "__main__":
