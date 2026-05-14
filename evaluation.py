@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
+import torch
 
 def plot_confusion_matrix(model, X_test, y_test):
     preds = model.forward(X_test)
@@ -33,3 +34,8 @@ def plot_loss(train_loss, val_loss):
     plt.plot(val_loss, label="Test Loss")
     plt.legend()
     plt.show()
+
+def accuracy(model, X, y):
+    with torch.no_grad():
+        preds = model.forward(X).argmax(dim=1)
+        return (preds == y).float().mean().item()
