@@ -17,6 +17,15 @@ def plot_confusion_matrix(model, X_test, y_test):
     plt.title("Confusion Matrix")
     plt.show()
 
+def plot_confusion_matrix_cnn(model, X_test, y_test):
+    preds = model.forward(X_test)
+    cm = confusion_matrix(y_test, preds)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.title("Confusion Matrix")
+    plt.show()
+
 def plot_loss(train_loss, val_loss):
     plt.plot(train_loss, label = "Loss")
     plt.plot(val_loss, label="Test Loss")
