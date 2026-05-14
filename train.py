@@ -13,7 +13,7 @@ from logistic_regression_model import BinaryLogReg, GradientDescentOptimizer, bi
 
 import numpy as np
 
-DATA_DIR     = "data/edffile"
+DATA_DIR     = "data"
 SEED         = 42
 N_SUBJECTS   = 49
 N_TRAIN      = 40
