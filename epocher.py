@@ -12,7 +12,7 @@ MOTOR_CHANNELS = ['Cz', 'C3', 'C4']
 
 class Data_Epoch:
     def __init__(self):
-        self.ed_files = []
+        self.edf_files = []
         self.dataset = []
 
     def build_dataset(self, root_dir, fs=500, seconds_per_trial=8.0, l_freq = 1.0, h_freq = 40.0, end = 4):
