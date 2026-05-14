@@ -5,11 +5,14 @@ import torch
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch.nn as nn
+import matplotlib.pyplot as plt
+from evaluation import plot_confusion_matrix_cnn, plot_loss
+
 
 def main():
     model = cnn.ConvNet()
     epoch = Data_Epoch()
-    dataset = epoch.build_dataset("data/edffile", end = 6)
+    dataset = epoch.build_dataset("data", end = 6)
 
     # create train and test datasets
     train, test = random_split(dataset)
@@ -40,7 +43,7 @@ def main():
     loss_fn = nn.CrossEntropyLoss()
 
     # train the model
-    TRAIN = False
+    TRAIN = True
     total_loss = 0
     if TRAIN:
         train_losses = []
@@ -49,7 +52,7 @@ def main():
         best_val = float('inf')
         patience = 10
         strikes = 0
-        for epoch in range(100): # note performs better with around 5
+        for epoch in range(0): # note performs better with around 5
             train_batch_losses = []
             val_batch_losses = []
             for X_batch, y_batch in train_loader:
@@ -86,6 +89,17 @@ def main():
                 if strikes >= patience:
                     print(f"Early stopping at epoch {epoch}")
                     break
+        
+        plot_loss(train_losses, val_losses)
+      #  plot_confusion_matrix_cnn(model, X_test, y_test)
+
+        torch.save(model.state_dict(), "eeg_model_rec10.pth")
+        print("Model saved!")
+
+    else:
+        model = cnn.ConvNet()
+        model.load_state_dict(torch.load("eeg_model_rec8.pth"))
+        model.eval()
 
 if __name__ == "__main__":
     main()
