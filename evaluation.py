@@ -19,7 +19,9 @@ def plot_confusion_matrix(model, X_test, y_test):
 
 def plot_confusion_matrix_cnn(model, X_test, y_test):
     preds = model.forward(X_test)
-    cm = confusion_matrix(y_test, preds)
+    y_true = y_test.cpu().numpy()
+    y_pred = preds.argmax(dim=1).detach().cpu().numpy()
+    cm = confusion_matrix(y_true, y_pred)
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
     plt.xlabel("Predicted")
     plt.ylabel("Actual")
