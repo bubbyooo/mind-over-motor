@@ -108,7 +108,7 @@ def binary_cross_entropy(q, y):
 
 train_loader  = DataLoader(torch.utils.data.TensorDataset(X_train, y_train), batch_size=32, shuffle=True)
 val_loader    = DataLoader(torch.utils.data.TensorDataset(X_test, y_test), batch_size=32, shuffle=False)
-
+"""
 optimizer = optim.Adam(model.parameters(), lr=0.000005)
 TRAIN = False
 total_loss = 0
@@ -212,3 +212,4 @@ with torch.no_grad():
 print("train accuracy: ", accuracy(model, X_train, y_train))
 print("test accuracy: ", accuracy(model, X_test, y_test))
 
+"""
