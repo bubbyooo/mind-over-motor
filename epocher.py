@@ -4,6 +4,11 @@
 import torch
 import mne
 from loader import find_edf_files, load_raw
+import warnings
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+mne.set_log_level("ERROR")
 
 # EEG channels best for left/right motor imagery
 # Cz = central midline, C3 = left motor cortex, C4 = right motor cortex
