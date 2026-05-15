@@ -8,25 +8,31 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 from evaluation import plot_confusion_matrix_cnn, plot_loss, accuracy
 
+# --- Hyperparameters ---
 DATA_DIR     = "data"
-LR           = 0.00005
+LR           = 0.00005  # learning rate
 EPOCHS       = 100
 BATCH_SIZE   = 32
-PATIENCE     = 10
+PATIENCE     = 10       # number of epochs without improvement before early stopping
 
 def data_prep(dataset):
+    """
+    Prepares train/test tensors from the dataset.
+    Splits data, clamps outliers, and normalizes using training set statistics.
+    """
     train, test = random_split(dataset)
 
+    # Stack list of samples into tensors
     X_train = torch.stack([item["x"] for item in train]).float()
     y_train = torch.tensor([item["y"] for item in train], dtype=torch.long)
     X_test  = torch.stack([item["x"] for item in test]).float()
     y_test  = torch.tensor([item["y"] for item in test], dtype=torch.long)
 
-    #getting rid of outliers as per claude
+    # Clamp outliers to [-5, 5] range (as per claude)
     X_train = X_train.clamp(-5, 5)
     X_test  = X_test.clamp(-5, 5)
 
-    # Re-normalize after clipping as per claude
+    # Re-normalize after clipping using training set mean/std (as per claude)
     mean = X_train.mean(dim=(0, 2), keepdim=True)
     std  = X_train.std(dim=(0, 2), keepdim=True)
 
@@ -38,35 +44,40 @@ def data_prep(dataset):
 def main():
     model = cnn.ConvNet()
     epoch = Data_Epoch()
+
+    # Build dataset using seconds 2 to 6 from each trial
     dataset = epoch.build_dataset(DATA_DIR, end = 6)
 
-    # create train and test datasets
+    # Prepare train/test tensors
     X_train, X_test, y_train, y_test = data_prep(dataset)
 
+    # Wrap training data in a DataLoader for batching
     train_loader  = DataLoader(torch.utils.data.TensorDataset(X_train, y_train), batch_size=68, shuffle=True)
-    #create optimizer
+    
+    # Adam optimizer with learning rate scheduler
     optimizer = optim.Adam(model.parameters(), lr=LR)
 
-    #scheduler suggested by claude
+    # Reduce LR when validation loss plateaus (suggested by claude)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, mode='min', patience=5, factor=0.5
 )
     loss_fn = nn.CrossEntropyLoss()
     # train the model
-    TRAIN = True
+    TRAIN = True # set to False to skip training and load saved model
     total_loss = 0
     if TRAIN:
         train_losses = []
         val_losses = []
-        #following 3 lines from claude on patience metric
+        
+        # Early stopping trackers (from claude)
         best_val = float('inf')
         strikes = 0
 
-        for epoch in range(EPOCHS): # note performs better with around 5
+        for epoch in range(EPOCHS): 
             train_batch_losses = []
 
             for X_batch, y_batch in train_loader:
-                model.train() # per claude makes sure training mode is on (ie with dropout)
+                model.train() # enable dropout during training (per claude)
                 optimizer.zero_grad()
                 y_pred = model(X_batch)
                 loss   = loss_fn(y_pred, y_batch)
@@ -74,10 +85,12 @@ def main():
                 loss.backward()
                 optimizer.step()
             
+            # Average loss across all batches in this epoch
             epoch_train_loss = sum(train_batch_losses)/len(train_batch_losses)
             train_losses.append(epoch_train_loss)
 
-            model.eval() #per claude removes dropout
+            # Evaluate on test set
+            model.eval() # disable dropout for evaluation (per claude)
             with torch.no_grad():
                 val_y_pred = model(X_test)
                 val_loss = loss_fn(val_y_pred, y_test)
@@ -88,7 +101,7 @@ def main():
             print('Strikes: ', strikes)
             # total_loss += loss.item() #claude
 
-            # if__else from claude, trains until 10 subsequent worse losses in a row
+            # Save best model and apply early stopping (from claude)
             if val_loss < best_val:
                 best_val = val_loss
                 strikes = 0
@@ -108,6 +121,7 @@ def main():
         print("Model saved!")
 
     else:
+        # Load a previously saved model for evaluation
         model = cnn.ConvNet()
         model.load_state_dict(torch.load("eeg_model_rec10.pth"))
         model.eval()
