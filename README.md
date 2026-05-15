@@ -33,3 +33,7 @@ If our project is successful and deployed, we would hope that it allows for BCI 
 # Timeline:
 After two weeks, at a minimum, we intend to have data in the form of numbers that can be processed and a feature map that might reflect the important weights.  We also intend to have a basic logistic regression machine that outputs a (not necessarily good) prediction.
 After four weeks, we will have reconsidered whether logistic regression is an appropriate algorithm, and will have compared it to another, more complex algorithm of our design.  We will have refined our model (logistic regression or other) and evaluated our model.  At this point, we will have a discussion of our work, choices, and successes/failures.  
+
+# Requirements
+
+This project requires the MNE package, in addition to the packages that we have typically used throughout the course. 
