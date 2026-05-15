@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent / 'src'))
+
 import model_1d_cnn as cnn
 from epocher import Data_Epoch
 from dataset import random_split, subject_split
