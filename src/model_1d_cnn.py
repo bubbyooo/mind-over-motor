@@ -14,7 +14,7 @@ class ConvNet(nn.Module):
     """
     1D CNN for 3-class EEG motor imagery classification (left / right / rest).
 
-    Input:  (batch, 4, time) — 4 EEG feature channels
+    Input:  (batch, 4, time) — 4 EEG feature channels (cz, c3, c4, and a derived channel: c3*c4)
     Output: (batch, 3)       — raw class logits
     """
 
