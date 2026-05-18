@@ -20,7 +20,7 @@ DATA_DIR     = "data"
 SEED         = 42
 N_SUBJECTS   = 49
 N_TRAIN      = 40
-LR           = .0003
+LR           = 0.0003
 EPOCHS       = 185000
 LOG_EVERY    = 10000
 
