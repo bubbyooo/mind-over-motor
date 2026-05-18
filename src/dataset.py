@@ -1,16 +1,12 @@
 # PyTorch Dataset wrapper
 # Keeps PyTorch interface layer separate from EEG data
 
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import random
 
-#Total number of subjects in the dataset.
-# Used to generate subject IDs 0 .. N_SUBJECTS-1.
-N_SUBJECTS      = 50
 
-# Number of subjects allocated to the training partition in subject_split().
-# The remaining (N_SUBJECTS - N_TRAIN) subjects form the test partition.
-N_TRAIN         = 40
+N_SUBJECTS      = 50        #Total number of subjects in the dataset.
+N_TRAIN         = 40        # Number of subjects allocated to the training partition in subject_split().
 
 class EEGDataset(Dataset):
     """
@@ -50,8 +46,7 @@ class EEGDataset(Dataset):
 # Test/train split by subject
 def subject_split(dataset):
     """
-    Split by subject ID so no subject appears in both partitions.
-
+    Split by subject ID so no subject appears in both partitions.  
     Prevents data leakage and gives a more realistic cross-subject evaluation
     than a random sample split. 
 
