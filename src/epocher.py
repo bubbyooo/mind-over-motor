@@ -55,6 +55,8 @@ class Data_Epoch:
 
         trial_start = int(2 * fs)  # Motor imagery begins at 2 s
         trial_end = int(end * fs)   # Motor imagery ends at `end` s
+        rest_start = int(6 * fs) # rest begins at 6 s
+        rest_end = int(8 * fs)  # rest ends at 8 s
 
         for subject_id, edf_path in enumerate(self.edf_files):
             raw = load_raw(edf_path, preload=True)
@@ -74,8 +76,6 @@ class Data_Epoch:
                             torch.tensor(1))  # right
 
             # --- Rest trials ---
-            rest_start = 6*fs
-            rest_end = 8*fs
             all_rest_trials = torch.tensor(data[:,:, rest_start:rest_end], dtype = torch.float)
 
             # Keep a random 50 % of rest segments to balance the class distribution
@@ -94,8 +94,6 @@ class Data_Epoch:
                     "y": int(y[i]),
                     "subject": subject_id
                 })
-
-            
 
         return self.dataset
     
