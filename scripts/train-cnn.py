@@ -16,14 +16,15 @@ from evaluation import plot_confusion_matrix_cnn, plot_loss, accuracy
 DATA_DIR     = "data"
 LR           = 0.00005  # learning rate
 EPOCHS       = 100
-BATCH_SIZE   = 32
+BATCH_SIZE   = 68
 PATIENCE     = 10       # number of epochs without improvement before early stopping
-TRAIN        = False    # set to False to skip training and load saved model
+TRAIN        = True    # set to False to skip training and load saved model
 
 
 def data_prep(dataset):
     """
     Prepares train/test tensors from the dataset.
+    Adds a combin
     Splits data, clamps outliers, and normalizes using training set statistics.
     """
     train, test = random_split(dataset)
@@ -33,6 +34,9 @@ def data_prep(dataset):
     y_train = torch.tensor([item["y"] for item in train], dtype=torch.long)
     X_test  = torch.stack([item["x"] for item in test]).float()
     y_test  = torch.tensor([item["y"] for item in test], dtype=torch.long)
+
+    X_train = add_polynomial_feat(X_train)
+    X_test = add_polynomial_feat(X_test)
 
     # Clamp outliers to [-5, 5] range (as per claude)
     X_train = X_train.clamp(-5, 5)
@@ -47,18 +51,26 @@ def data_prep(dataset):
 
     return X_train, X_test, y_train, y_test
 
+def add_polynomial_feat(X):
+    # adds a feature channel multiplying channel c3 by channel c4
+    c3_c4 = X[:, 1, :] * X[:, 2, :]
+    c3_c4 = torch.unsqueeze(c3_c4, dim = 1)
+    print("XSHAPE: ", X.shape, " COMBO SHAPE: ", c3_c4.shape)
+    X = torch.cat((X, c3_c4), dim = 1)
+    return X
+
 def main():
     model = cnn.ConvNet()
     epoch = Data_Epoch()
 
     # Build dataset using seconds 2 to 6 from each trial
-    dataset = epoch.build_dataset(DATA_DIR, end = 6)
+    dataset = epoch.build_dataset(DATA_DIR, end = 4)
 
     # Prepare train/test tensors
     X_train, X_test, y_train, y_test = data_prep(dataset)
 
     # Wrap training data in a DataLoader for batching
-    train_loader  = DataLoader(torch.utils.data.TensorDataset(X_train, y_train), batch_size=68, shuffle=True)
+    train_loader  = DataLoader(torch.utils.data.TensorDataset(X_train, y_train), BATCH_SIZE, shuffle=True)
     
     # Adam optimizer with learning rate scheduler
     optimizer = optim.Adam(model.parameters(), lr=LR)
