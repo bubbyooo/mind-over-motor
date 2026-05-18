@@ -1,4 +1,4 @@
-# Extracts features from individual trails
+# Extracts spectral features from individual EEG trials
 
 import torch
 from mne.time_frequency import psd_array_welch
@@ -15,12 +15,28 @@ MU_BAND = (10, 13)      # Ming-Cheng Cheng (2022) suggests
 GAMMA_BAND = (30, 50)
 
 
-# Channel indices in trial array
-CZ_IDX = 0
-C3_IDX = 1
-C4_IDX = 2
+# Channel indices in each trial tensor
+CZ_IDX = 0 # Central midline
+C3_IDX = 1 # Left motor cortex
+C4_IDX = 2 # Right motor cortex
 
 def extract_features(trial):
+    """
+    Extract spectral features from a single trial.
+
+    For each channel, computes band power in alpha, beta, mu, and gamma bands
+    via Welch's PSD method (1-50 Hz). Appends C3-C4 laterality asymmetry
+    for each band (positive = C3 dominant / left hand, negative = C4 dominant
+    / right hand).
+
+    Args:
+        trial (torch.Tensor): Shape (n_channels, n_times).
+
+    Returns:
+        list[torch.Tensor]: 16 scalar features —
+            4 bands x 3 channels (per-channel power) +
+            4 bands x 1 (C3-C4 asymmetry).
+    """
     features = []
     band_powers = {} # per-channel band powers for assymetry calc
 
@@ -56,8 +72,22 @@ def extract_features(trial):
     features += [alpha_sym, beta_sym, mu_sym, gamma_sym]
     return features
 
-# Run extract_features over every trial to build (X, y) tensors
 def build_feature_matrix(data):
+    """
+    Run extract_features over every trial and return normalised (X, y) tensors.
+
+    Normalisation is applied in two stages:
+      1. Per-subject z-score — removes between-subject amplitude differences.
+      2. Global z-score — centres the full matrix for model training.
+
+    Args:
+        data (list[dict]): Dataset samples with keys 'x', 'y', 'subject'.
+
+    Returns:
+        tuple:
+            X (torch.Tensor): Normalised feature matrix, shape (n_trials, n_features).
+            y (torch.Tensor): Long tensor of class labels, shape (n_trials,).
+    """
     feature_rows = []
     labels = []
     subject_ids = []
@@ -87,7 +117,7 @@ def build_feature_matrix(data):
     y = torch.tensor(labels, dtype=torch.long)
     return X, y
 
-# Return mean PSD for frequencies in [fmin, fmax]
 def _band_power(psds, freqs, fmin, fmax):
+    '''# Return mean PSD for frequencies in [fmin, fmax]'''
     idx = torch.where((freqs >= fmin) & (freqs <= fmax))[0]
     return torch.mean(psds[idx])
