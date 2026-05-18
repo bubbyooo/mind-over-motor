@@ -55,8 +55,6 @@ class Data_Epoch:
 
             y = torch.cat((y, rest_labels))
             X = torch.cat((X, rest_trials), dim = 0)
-
-            print(y)
           
             for i in range(len(X)):
                 self.dataset.append({
