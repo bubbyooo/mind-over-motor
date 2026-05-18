@@ -14,8 +14,8 @@ from evaluation import plot_confusion_matrix_cnn, plot_loss, accuracy
 
 # --- Hyperparameters ---
 DATA_DIR     = "data"
-LR           = 0.00005  # learning rate
-EPOCHS       = 100
+LR           = 0.00003  # learning rate
+EPOCHS       = 1000
 BATCH_SIZE   = 68
 PATIENCE     = 10       # number of epochs without improvement before early stopping
 TRAIN        = True    # set to False to skip training and load saved model
