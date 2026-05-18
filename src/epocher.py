@@ -5,6 +5,8 @@ import torch
 import mne
 from loader import find_edf_files, load_raw
 import warnings
+import random
+import dataset
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -47,9 +49,10 @@ class Data_Epoch:
             
             rest_start = 6*fs
             rest_end = 8*fs
-
-            rest_trials = data[:,:, rest_start:rest_end]
-            rest_trials = torch.tensor(rest_trials, dtype = torch.float)
+            all_rest_trials = data[:,:, rest_start:rest_end]
+            all_rest_trials = torch.tensor(all_rest_trials, dtype = torch.float)
+            rest_trials, other_trials = dataset.random_split(all_rest_trials, frac = 0.5)
+            rest_trials = torch.stack(rest_trials)
     
             rest_labels = torch.ones(rest_trials.shape[0]) * 2
 
@@ -72,6 +75,7 @@ class Data_Epoch:
         raw.pick_channels(MOTOR_CHANNELS)
         raw.filter(l_freq=l_freq, h_freq=h_freq, verbose=False)
         return raw
+
 
 epochs = Data_Epoch()
 epochs.build_dataset("data")
