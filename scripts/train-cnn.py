@@ -14,10 +14,10 @@ from evaluation import plot_confusion_matrix_cnn, plot_loss, accuracy
 
 # --- Hyperparameters ---
 DATA_DIR     = "data"
-LR           = 0.00003  # learning rate
+LR           = 0.00002  # learning rate
 EPOCHS       = 1000
 BATCH_SIZE   = 68
-PATIENCE     = 10       # number of epochs without improvement before early stopping
+PATIENCE     = 30       # number of epochs without improvement before early stopping
 TRAIN        = True    # set to False to skip training and load saved model
 
 
@@ -64,7 +64,7 @@ def main():
     epoch = Data_Epoch()
 
     # Build dataset using seconds 2 to 6 from each trial
-    dataset = epoch.build_dataset(DATA_DIR, end = 4)
+    dataset = epoch.build_dataset(DATA_DIR)
 
     # Prepare train/test tensors
     X_train, X_test, y_train, y_test = data_prep(dataset)
@@ -113,7 +113,7 @@ def main():
                 val_loss = loss_fn(val_y_pred, y_test)
             val_losses.append(val_loss.item())
             
-            print("epoch loss: ", loss)
+            print("epoch ", epoch, " loss: ", loss)
             print("epoch val loss: ", val_loss, "\n")
             print('Strikes: ', strikes)
             # total_loss += loss.item() #claude
@@ -134,7 +134,7 @@ def main():
         plot_loss(train_losses, val_losses)
       #  plot_confusion_matrix_cnn(model, X_test, y_test)
 
-        torch.save(model.state_dict(), "eeg_model_rec10.pth")
+        torch.save(model.state_dict(), "mon_model_1.pth")
         print("Model saved!")
 
     else:
