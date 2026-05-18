@@ -4,17 +4,18 @@ sys.path.append(str(Path(__file__).parent.parent / 'src'))
 
 import model_1d_cnn as cnn
 from epocher import Data_Epoch
-from dataset import random_split, subject_split
+from dataset import random_split
 import torch
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch.nn as nn
 import matplotlib.pyplot as plt
+import pickle
 from evaluation import plot_confusion_matrix_cnn, plot_loss, accuracy
 
 # --- Hyperparameters ---
 DATA_DIR     = "data"
-LR           = 0.00002  # learning rate
+LR           = 0.00003  # learning rate
 EPOCHS       = 1000
 BATCH_SIZE   = 68
 PATIENCE     = 30       # number of epochs without improvement before early stopping
@@ -146,6 +147,10 @@ def main():
     plot_confusion_matrix_cnn(model, X_test, y_test)
     print("train accuracy: ", accuracy(model, X_train, y_train))
     print("test accuracy: ", accuracy(model, X_test, y_test))
+
+    # saves model via pickle for version control
+    with open("model.pkl", "wb") as f:
+        pickle.dump(model, f)
 
 if __name__ == "__main__":
     main()
