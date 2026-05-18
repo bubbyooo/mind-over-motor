@@ -5,6 +5,9 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import random
 
+N_SUBJECTS      = 50
+N_TRAIN         = 40
+
 class EEGDataset(Dataset):
     def __init__(self, data, transform=None):
         self.data = data
@@ -21,13 +24,14 @@ class EEGDataset(Dataset):
         return x, y
     
 # Test/train split by subject
-def subject_split(dataset, train_ids, test_ids):
+def subject_split(dataset):
     # deals with train_ids/test_ids here instead of in train.py
-    subject_ids = list(range(49))
+    subject_ids = list(range(N_SUBJECTS - 1))
     random.seed(42)
     random.shuffle(subject_ids)
-    train_ids = subject_ids[:40]
-    test_ids = subject_ids[40:]
+
+    train_ids = subject_ids[:N_TRAIN]
+    test_ids = subject_ids[N_TRAIN:]
 
     train = [x for x in dataset if x['subject'] in set(train_ids)]
     test = [x for x in dataset if x['subject'] in set(test_ids)]
