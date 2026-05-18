@@ -9,13 +9,14 @@ from epocher import Data_Epoch
 
 # copied from lecture mar2
 def binary_cross_entropy(q, y):
-    # Claude to prevent log(0) numerical issues
+    """Binary cross-entropy loss. Used claude to clamp q to avoid log(0)"""
     eps = 1e-8
     q = torch.clamp(q, eps, 1 - eps)
     return -(y * torch.log(q) + (1-y)*torch.log(1-q)).mean()
 
 
 def sigmoid(z):
+    """Squash z to (0, 1)."""
     return 1 / (1 + torch.exp(-z))
 
 
@@ -23,11 +24,14 @@ def sigmoid(z):
 
 # from lecture mar2
 class BinaryLogReg:
+    """Logistic regression: predicts P(y=1 | X)."""
+
     def __init__(self, n_features):
         self.w = torch.randn(n_features, 1) * 0.01  # small random init
         self.b = torch.zeros(1)  # bias term
 
     def forward(self, X):
+        """Return predicted probabilities, shape (n, 1)."""
         return sigmoid(X @ self.w + self.b)
 
 #---Optimizer---
@@ -39,6 +43,7 @@ class GradientDescentOptimizer:
         self.lr = lr
 
     def _grad(self, X, y):
+        """Compute gradients with respect to w and b."""
         q = self.model.forward(X)
         residuals = q - y
         grad_w = (1 / X.shape[0]) * X.T @ residuals
@@ -46,6 +51,7 @@ class GradientDescentOptimizer:
         return grad_w, grad_b
     
     def step(self, X, y):
+        """Update weights by one gradient descent step."""
         grad_w, grad_b = self._grad(X, y)
         with torch.no_grad():
             self.model.w -= self.lr * grad_w
@@ -55,6 +61,7 @@ class GradientDescentOptimizer:
 #---Evaluation---
 
 def accuracy(model, X, y):
+    """Fraction of correct predictions (threshold 0.5)."""
     with torch.no_grad():
         preds = (model.forward(X) >= 0.5).float()
         return (preds == y).float().mean().item()
