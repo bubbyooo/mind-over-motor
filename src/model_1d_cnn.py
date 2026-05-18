@@ -15,13 +15,13 @@ class ConvNet(nn.Module):
         super().__init__()
 
         self.pipeline = torch.nn.Sequential(
-            nn.Conv1d(3, 32, kernel_size = 25, padding = 12),
+            nn.Conv1d(4, 32, kernel_size = 13, padding = 12),
             nn.BatchNorm1d(32),
             nn.MaxPool1d(4),
             ReLU(),
             nn.Dropout(0.2),
 
-            nn.Conv1d(32, 16, kernel_size = 13, padding = 6),
+            nn.Conv1d(32, 16, kernel_size = 11, padding = 6),
             nn.BatchNorm1d(16),
             nn.MaxPool1d(4),
             ReLU(),
@@ -32,7 +32,7 @@ class ConvNet(nn.Module):
             nn.MaxPool1d(2),
             ReLU(),
             nn.Flatten(),
-            nn.LazyLinear(2)
+            nn.LazyLinear(3)
         )
 
     def forward(self, x):
