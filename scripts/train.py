@@ -32,15 +32,8 @@ def main():
     dataset = epocher.build_dataset(DATA_DIR)
     print(f"Total trials: {len(dataset)}")
 
-    # Test/train split by subject
-    subject_ids = list(range(N_SUBJECTS))
-    random.seed(SEED)
-    random.shuffle(subject_ids)
-
-    train_ids = subject_ids[:N_TRAIN]
-    test_ids = subject_ids[N_TRAIN:]
-
-    train_data, test_data = subject_split(dataset, train_ids, test_ids)
+    # train test split by subject
+    train_data, test_data = subject_split(dataset)
 
     # Feature extraction
     print("\nExtracting features...")
