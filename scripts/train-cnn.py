@@ -18,6 +18,8 @@ LR           = 0.00005  # learning rate
 EPOCHS       = 100
 BATCH_SIZE   = 32
 PATIENCE     = 10       # number of epochs without improvement before early stopping
+TRAIN        = False    # set to False to skip training and load saved model
+
 
 def data_prep(dataset):
     """
@@ -67,7 +69,6 @@ def main():
 )
     loss_fn = nn.CrossEntropyLoss()
     # train the model
-    TRAIN = True # set to False to skip training and load saved model
     total_loss = 0
     if TRAIN:
         train_losses = []
