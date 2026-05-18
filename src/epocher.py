@@ -22,14 +22,14 @@ class Data_Epoch:
         self.edf_files = []
         self.dataset = []
 
-    def build_dataset(self, root_dir, fs=500, seconds_per_trial=8.0, l_freq = 1.0, h_freq = 40.0, end = 4):
+    def build_dataset(self, root_dir, fs=500, seconds_per_trial=8.0, l_freq = 1.0, h_freq = 40.0):
         self.edf_files = find_edf_files(root_dir)
         self.dataset = []  # reset dataset in case of multiple calls
 
 
         trial_start = int(2 * fs)  # start of trial in samples
-        trial_end = int(end * fs)    # 2 seconds of data per trial
-                                   # relevant information?
+        trial_mid = int(4 * fs)    # 2 seconds of data per trial
+        trial_end =  int(6 * fs)                         # relevant information?
                                    # for cnn di
 
         for subject_id, edf_path in enumerate(self.edf_files):
@@ -38,8 +38,9 @@ class Data_Epoch:
 
             epochs = mne.make_fixed_length_epochs(raw, duration=seconds_per_trial, verbose=False)
             data = epochs.get_data()
-            trials = data[:, :, trial_start:trial_end]
-            X = torch.tensor(trials, dtype=torch.float32)
+            trials_a = torch.tensor(data[:, :, trial_start:trial_mid], dtype=torch.float32)
+            trials_b = torch.tensor(data[:, :, trial_mid:trial_end], dtype=torch.float32)
+            X = torch.cat((trials_a, trials_b), dim = 0)
 
             # Labeling: even trials are left (0), odd trials are right (1)
             y = torch.where(torch.arange(len(X)) % 2 == 0,
@@ -51,13 +52,13 @@ class Data_Epoch:
             rest_end = 8*fs
             all_rest_trials = data[:,:, rest_start:rest_end]
             all_rest_trials = torch.tensor(all_rest_trials, dtype = torch.float)
-            rest_trials, other_trials = dataset.random_split(all_rest_trials, frac = 0.5)
-            rest_trials = torch.stack(rest_trials)
+      #      rest_trials, other_trials = dataset.random_split(all_rest_trials, frac = 0.5)
+       #     rest_trials = torch.stack(rest_trials)
     
-            rest_labels = torch.ones(rest_trials.shape[0]) * 2
+            rest_labels = torch.ones(all_rest_trials.shape[0]) * 2
 
             y = torch.cat((y, rest_labels))
-            X = torch.cat((X, rest_trials), dim = 0)
+            X = torch.cat((X, all_rest_trials), dim = 0)
           
             for i in range(len(X)):
                 self.dataset.append({
