@@ -44,12 +44,28 @@ class Data_Epoch:
                             torch.tensor(0),  # left
                             torch.tensor(1))  # right
 
+            
+            rest_start = 6*fs
+            rest_end = 8*fs
+
+            rest_trials = data[:,:, rest_start:rest_end]
+            rest_trials = torch.tensor(rest_trials, dtype = torch.float)
+    
+            rest_labels = torch.ones(rest_trials.shape[0]) * 2
+
+            y = torch.cat((y, rest_labels))
+            X = torch.cat((X, rest_trials), dim = 0)
+
+            print(y)
+          
             for i in range(len(X)):
                 self.dataset.append({
                     "x": X[i],
                     "y": int(y[i]),
                     "subject": subject_id
                 })
+
+            
 
         return self.dataset
     
@@ -58,3 +74,6 @@ class Data_Epoch:
         raw.pick_channels(MOTOR_CHANNELS)
         raw.filter(l_freq=l_freq, h_freq=h_freq, verbose=False)
         return raw
+
+epochs = Data_Epoch()
+epochs.build_dataset("data")
