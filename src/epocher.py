@@ -79,7 +79,7 @@ class Data_Epoch:
             all_rest_trials = torch.tensor(data[:,:, rest_start:rest_end], dtype = torch.float)
 
             # Keep a random 50 % of rest segments to balance the class distribution
-            rest_trials, _ = dataset.random_split(all_rest_trials, frac = 0.5)
+            rest_trials, _ = dataset.random_split(all_rest_trials, frac = 0.5, seed = subject_id)
             rest_trials = torch.stack(rest_trials)
             rest_labels = torch.ones(rest_trials.shape[0]) * 2. # label 2 = rest
             
