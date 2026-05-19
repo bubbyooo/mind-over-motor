@@ -43,6 +43,7 @@ def plot_loss(train_loss, val_loss):
     plt.plot(train_loss, label = "Loss")
     plt.plot(val_loss, label="Test Loss")
     plt.legend()
+    plt.savefig("cnn_loss.png")
     plt.show()
 
 def accuracy(model, X, y):
