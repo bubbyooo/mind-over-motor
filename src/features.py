@@ -99,6 +99,39 @@ def extract_features(trial):
     beta_mu_combined = beta_total / (mu_total + eps)
 
     features += [beta_mu_C3, beta_mu_C4, beta_mu_combined]
+
+    # Used Claude to implement early/late window power
+    # ERD ratio — early vs late window power on C3/C4
+    # ERD is strongest 500ms-1500ms post-cue; compare to baseline window
+    split = trial.shape[1] // 2
+    for ch_idx in [C3_IDX, C4_IDX]:
+        early = trial[ch_idx, :split]
+        late  = trial[ch_idx, split:]
+        freqs = None
+        for segment in (early, late):
+            psds, freqs = psd_array_welch(segment.numpy(), sfreq=SFREQ,
+                                           fmin=1, fmax=50, verbose=False)
+            psds  = torch.tensor(psds)
+            freqs = torch.tensor(freqs)
+            mu_pow   = _band_power(psds, freqs, *MU_BAND)
+            beta_pow = _band_power(psds, freqs, *BETA_BAND)
+            features += [mu_pow, beta_pow]
+
+        # ERD = suppression ratio: late/early (low = strong ERD = active imagery)
+        early_psds, _ = psd_array_welch(early.numpy(), sfreq=SFREQ, fmin=1, fmax=50, verbose=False)
+        late_psds,  _ = psd_array_welch(late.numpy(),  sfreq=SFREQ, fmin=1, fmax=50, verbose=False)
+        early_psds, late_psds = torch.tensor(early_psds), torch.tensor(late_psds)
+        freqs = torch.as_tensor(freqs)
+        for band, brange in [("mu", MU_BAND), ("beta", BETA_BAND)]:
+            early_pow = _band_power(early_psds, freqs, *brange)
+            late_pow  = _band_power(late_psds,  freqs, *brange)
+            features.append(late_pow / (early_pow + eps))  # ERD ratio
+
+    # Log power (stabilizes variance across subjects)
+    for ch_idx in [C3_IDX, C4_IDX]:
+        for band in ["mu", "beta"]:
+            features.append(torch.log(band_powers[ch_idx][band] + eps))
+
     return features
 
 def build_feature_matrix(data):
