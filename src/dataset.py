@@ -1,6 +1,7 @@
 # PyTorch Dataset wrapper
 # Keeps PyTorch interface layer separate from EEG data
 
+import torch
 from torch.utils.data import Dataset
 import random
 
@@ -42,6 +43,7 @@ class EEGDataset(Dataset):
         if self.transform:
             x = self.transform(x)
         return x, y
+
     
 # Test/train split by subject
 def subject_split(dataset):
@@ -64,7 +66,7 @@ def subject_split(dataset):
     test = [x for x in dataset if x['subject'] in set(test_ids)]
     return train, test
 
-def random_split(dataset, frac = .8, seed = 42):
+def random_split(dataset, frac=0.8, seed=42):
     """
     Randomly split at the sample level (same subject may appear in both sets).
 
@@ -79,7 +81,8 @@ def random_split(dataset, frac = .8, seed = 42):
     random.seed(seed)
     indices = list(range(len(dataset)))
     random.shuffle(indices)
-    split = int(len(dataset) * frac)
-    train = [dataset[i] for i in indices[:split]]
-    test = [dataset[i] for i in indices[split:]]
+
+    n_train = int(frac * len(dataset))
+    train = [dataset[i] for i in indices[:n_train]]
+    test = [dataset[i] for i in indices[n_train:]]
     return train, test
