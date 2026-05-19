@@ -19,8 +19,8 @@ DATA_DIR     = "data"
 LR           = 0.00003  # learning rate
 EPOCHS       = 1000
 BATCH_SIZE   = 68
-PATIENCE     = 30       # number of epochs without improvement before early stopping
-TRAIN        = False    # set to False to skip training and load saved model
+PATIENCE     = 20       # number of epochs without improvement before early stopping
+TRAIN        = True    # set to False to skip training and load saved model
 
 
 def main():
@@ -86,7 +86,7 @@ def main():
             if val_loss < best_val:
                 best_val = val_loss
                 strikes = 0
-                torch.save(model.state_dict(), "best_model.pth")
+                torch.save(model.state_dict(), "best_model_of_run35.pth")
             else:
                 strikes += 1
                 if strikes >= PATIENCE:
@@ -97,17 +97,16 @@ def main():
         
         plot_loss(train_losses, val_losses)
       #  plot_confusion_matrix_cnn(model, X_test, y_test)
-
-        torch.save(model.state_dict(), "mon_model_1.pth")
-        print("Model saved!")
-        
-    model.load_state_dict(torch.load("best_model.pth"))
-    plot_confusion_matrix_cnn(model, X_test, y_test)
-    print("train accuracy: ", accuracy(model, X_train, y_train))
-    print("test accuracy: ", accuracy(model, X_test, y_test))
+    
+    model.eval()
+    model.load_state_dict(torch.load("best_model_of_run35.pth"))
+    with torch.no_grad():
+        plot_confusion_matrix_cnn(model, X_test, y_test)
+        print("train accuracy: ", accuracy(model, X_train, y_train))
+        print("test accuracy: ", accuracy(model, X_test, y_test))
 
     # saves model via pickle for version control
-    with open("model_in_prog.pkl", "wb") as f:
+    with open("model35", "wb") as f:
         pickle.dump(model, f)
 
 if __name__ == "__main__":
