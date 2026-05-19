@@ -20,7 +20,7 @@ LR           = 0.00003  # learning rate
 EPOCHS       = 1000
 BATCH_SIZE   = 68
 PATIENCE     = 30       # number of epochs without improvement before early stopping
-TRAIN        = True    # set to False to skip training and load saved model
+TRAIN        = False    # set to False to skip training and load saved model
 
 
 def main():
@@ -57,8 +57,8 @@ def main():
         for epoch in range(EPOCHS): 
             train_batch_losses = []
 
+            model.train() # enable dropout during training (per claude)
             for X_batch, y_batch in train_loader:
-                model.train() # enable dropout during training (per claude)
                 optimizer.zero_grad()
                 y_pred = model(X_batch)
                 loss   = loss_fn(y_pred, y_batch)
@@ -77,7 +77,7 @@ def main():
                 val_loss = loss_fn(val_y_pred, y_test)
             val_losses.append(val_loss.item())
             
-            print("epoch ", epoch, " loss: ", loss)
+            print("epoch ", epoch, " loss: ", epoch_train_loss)
             print("epoch val loss: ", val_loss, "\n")
             print('Strikes: ', strikes)
             # total_loss += loss.item() #claude
@@ -100,13 +100,8 @@ def main():
 
         torch.save(model.state_dict(), "mon_model_1.pth")
         print("Model saved!")
-
-    else:
-        # Load a previously saved model for evaluation
-        model = cnn.ConvNet()
-        model.load_state_dict(torch.load("eeg_model_rec10.pth"))
-        model.eval()
         
+    model.load_state_dict(torch.load("best_model.pth"))
     plot_confusion_matrix_cnn(model, X_test, y_test)
     print("train accuracy: ", accuracy(model, X_train, y_train))
     print("test accuracy: ", accuracy(model, X_test, y_test))

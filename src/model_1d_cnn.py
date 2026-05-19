@@ -18,7 +18,7 @@ class ConvNet(nn.Module):
     Output: (batch, 3)       — raw class logits
     """
 
-    # claude helped with ordering of incept and pipeline blocks
+    # claude helped extensively with the inception blocks and implementation
     def __init__(self):
         super().__init__()
 
@@ -31,18 +31,9 @@ class ConvNet(nn.Module):
             nn.Dropout(0.2),
         )
 
-        self.incept2 = InceptionBlock(in_channels = 24, out_channels = 8) # out 24 channels
-
-        self.block2 = nn.Sequential(
-            nn.BatchNorm1d(24),
-            nn.MaxPool1d(4),
-            ReLU(),
-            nn.Dropout(0.2),
-        )
+        self.resid1 = ResidualBlock(24)
 
         self.pipeline = torch.nn.Sequential(
-            #
-            
             # Block 1: 4 → 32 filters
             # changed to 24 and 16 instead of 4 and 32
             nn.Conv1d(24, 16, kernel_size = 13, padding = 12),
@@ -70,10 +61,9 @@ class ConvNet(nn.Module):
         )
 
     def forward(self, x):
-        x = self.incept1(x)
-        x = self.block1(x)
-        x = self.incept2(x)
-        x = self.block2(x)
+        x = self.incept1(x) 
+        x = self.block1(x) 
+        x = self.resid1(x)
         return self.pipeline(x)
     
 
@@ -93,5 +83,20 @@ class InceptionBlock(nn.Module):
         w = self.branch_wide(x)
         return torch.cat([n, m, w], dim = 1) # stack along channel dimension
 
+# also inspired by Kaviri and Vinjamuri
+# code taken from Claude
+class ResidualBlock(nn.Module):
+    def __init__(self, channels, kernel_size=9, padding=4):
+        super().__init__()
+        self.block = nn.Sequential(
+            nn.Conv1d(channels, channels, kernel_size=kernel_size, padding=padding),
+            nn.BatchNorm1d(channels),
+            nn.ReLU(),
+            nn.Conv1d(channels, channels, kernel_size=kernel_size, padding=padding),
+            nn.BatchNorm1d(channels),
+        )
+        self.relu = nn.ReLU()
 
-
+    def forward(self, x):
+        return self.relu(self.block(x) + x)
+    
