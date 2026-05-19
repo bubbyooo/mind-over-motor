@@ -112,7 +112,7 @@ def main():
     print("test accuracy: ", accuracy(model, X_test, y_test))
 
     # saves model via pickle for version control
-    with open("model.pkl", "wb") as f:
+    with open("model_in_prog.pkl", "wb") as f:
         pickle.dump(model, f)
 
 if __name__ == "__main__":
