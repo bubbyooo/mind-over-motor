@@ -30,6 +30,9 @@ class Data_Epoch:
         self.edf_files = []
         self.dataset = []
 
+    def __getdataset__(self):
+        return self.dataset
+
     def build_dataset(self, root_dir, fs=500, seconds_per_trial=8.0, l_freq = 1.0, h_freq = 40.0, end = 4):
         """
         Discover and process all EDF files under root_dir.
@@ -74,6 +77,7 @@ class Data_Epoch:
             y = torch.where(torch.arange(len(X)) % 2 == 0,
                             torch.tensor(0),  # left
                             torch.tensor(1))  # right
+            y = y.to(dtype=torch.long)
 
             # --- Rest trials ---
             all_rest_trials = torch.tensor(data[:,:, rest_start:rest_end], dtype = torch.float)
