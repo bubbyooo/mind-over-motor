@@ -5,6 +5,7 @@ sys.path.append(str(Path(__file__).parent.parent / 'src'))
 import model_1d_cnn as cnn
 from epocher import Data_Epoch
 from dataset import random_split
+from cnn_data_prep import data_prep
 import torch
 from torch.utils.data import DataLoader
 import torch.optim as optim
@@ -21,44 +22,6 @@ BATCH_SIZE   = 68
 PATIENCE     = 30       # number of epochs without improvement before early stopping
 TRAIN        = True    # set to False to skip training and load saved model
 
-
-def data_prep(dataset):
-    """
-    Prepares train/test tensors from the dataset.
-    Adds a combin
-    Splits data, clamps outliers, and normalizes using training set statistics.
-    """
-    train, test = random_split(dataset)
-
-    # Stack list of samples into tensors
-    X_train = torch.stack([item["x"] for item in train]).float()
-    y_train = torch.tensor([item["y"] for item in train], dtype=torch.long)
-    X_test  = torch.stack([item["x"] for item in test]).float()
-    y_test  = torch.tensor([item["y"] for item in test], dtype=torch.long)
-
-    X_train = add_polynomial_feat(X_train)
-    X_test = add_polynomial_feat(X_test)
-
-    # Clamp outliers to [-5, 5] range (as per claude)
-    X_train = X_train.clamp(-5, 5)
-    X_test  = X_test.clamp(-5, 5)
-
-    # Re-normalize after clipping using training set mean/std (as per claude)
-    mean = X_train.mean(dim=(0, 2), keepdim=True)
-    std  = X_train.std(dim=(0, 2), keepdim=True)
-
-    X_train = (X_train - mean) / (std + 1e-8)
-    X_test  = (X_test  - mean) / (std + 1e-8)
-
-    return X_train, X_test, y_train, y_test
-
-def add_polynomial_feat(X):
-    # adds a feature channel multiplying channel c3 by channel c4
-    c3_c4 = X[:, 1, :] * X[:, 2, :]
-    c3_c4 = torch.unsqueeze(c3_c4, dim = 1)
-    print("XSHAPE: ", X.shape, " COMBO SHAPE: ", c3_c4.shape)
-    X = torch.cat((X, c3_c4), dim = 1)
-    return X
 
 def main():
     model = cnn.ConvNet()
