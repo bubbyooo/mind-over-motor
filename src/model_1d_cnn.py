@@ -22,7 +22,7 @@ class ConvNet(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.incept1 = InceptionBlock(in_channels=4, out_channels=8) # out 24 channels
+        self.incept1 = InceptionBlock(in_channels=5, out_channels=8) # out 24 channels
 
         self.block1 = nn.Sequential(
             nn.BatchNorm1d(24),
@@ -63,7 +63,7 @@ class ConvNet(nn.Module):
     def forward(self, x):
         x = self.incept1(x) 
         x = self.block1(x) 
-        x = self.resid1(x)
+      #  x = self.resid1(x)
         return self.pipeline(x)
     
 
