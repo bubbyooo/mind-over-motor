@@ -37,7 +37,10 @@ def data_prep(dataset, fraction = 0.8):
 
 def add_polynomial_feat(X):
     # adds a feature channel multiplying channel c3 by channel c4
+    # adds an assymetry channel which finds the difference between c3 and c4
     c3_c4 = X[:, 1, :] * X[:, 2, :]
     c3_c4 = torch.unsqueeze(c3_c4, dim = 1)
-    X = torch.cat((X, c3_c4), dim = 1)
+    asymmetry = X[:, 1, :] - X[:, 2, :] # brainstormed with some help from claude
+    asymmetry = torch.unsqueeze(asymmetry, dim = 1)
+    X = torch.cat((X, c3_c4, asymmetry), dim = 1)
     return X
