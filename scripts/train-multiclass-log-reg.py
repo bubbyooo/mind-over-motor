@@ -27,7 +27,7 @@ LR           = 0.01
 EPOCHS       = 1000
 LOG_EVERY    = 100
 TRAIN_FRAC     = 0.8
-USE_BEST_MODEL = True
+USE_MODEL = True
 
 
 def main():
@@ -56,8 +56,8 @@ def main():
     # Model and optimizer
     n_features = X_train.shape[1]
     n_classes = len(torch.unique(y_train))
-    if USE_BEST_MODEL and os.path.exists("best_model.pth"):
-        with open("best_model.pth", "rb") as f:
+    if USE_MODEL and os.path.exists("logreg_model.pth"):
+        with open("logreg_model.pth", "rb") as f:
             model = pickle.load(f)
         print("Loaded best model from disk.")
     else:
@@ -97,14 +97,14 @@ def main():
     test_acc = accuracy(model, X_test, y_test)
     print(f"\nTest accuracy: {test_acc:.3f}")
 
-    with open("best_model.pth", "wb") as f:
+    with open("logreg_model.pth", "wb") as f:
         pickle.dump(model, f)
 
     plot_loss(train_losses, test_losses)
 
 
-    if os.path.exists("best_model.pth"):  
-        model = torch.load("best_model.pth")
+    if os.path.exists("logreg_model.pth"):  
+        model = torch.load("logreg_model.pth")
     plot_confusion_matrix_cnn(model, X_test, y_test)
     print("train accuracy: ", accuracy(model, X_train, y_train))
     print("test accuracy: ", accuracy(model, X_test, y_test))
