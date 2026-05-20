@@ -2,13 +2,6 @@ import torch.nn as nn
 import torch
 from torch.nn import ReLU
 
-# plans to improve
-# 1. work in batching to reduce overfitting
-# 2. add regularizer to reduce overfitting
-# 3. consider/research dropout and weight decay
-# 4. consider return to subject switch
-# 5. comment code etc
-
 #modified from lecture 13 notes
 class ConvNet(nn.Module):
     """
@@ -31,8 +24,6 @@ class ConvNet(nn.Module):
             nn.Dropout(0.2),
         )
 
-        self.resid1 = ResidualBlock(24)
-
         self.pipeline = torch.nn.Sequential(
             # Block 1: 4 → 32 filters
             # changed to 24 and 16 instead of 4 and 32
@@ -41,14 +32,6 @@ class ConvNet(nn.Module):
             nn.MaxPool1d(4),
             ReLU(),
             nn.Dropout(0.2),
-
-             #temporarily commented out bc of new block
-            # Block 2: 32 → 16 filters
-           # nn.Conv1d(32, 16, kernel_size = 11, padding = 6),
-           # nn.BatchNorm1d(16),
-           # nn.MaxPool1d(4),
-           # ReLU(),
-           # nn.Dropout(0.2),
 
             # Block 3: 16 → 32 filters
             nn.Conv1d(16, 32, kernel_size = 9, padding = 4),
@@ -63,7 +46,6 @@ class ConvNet(nn.Module):
     def forward(self, x):
         x = self.incept1(x) 
         x = self.block1(x) 
-      #  x = self.resid1(x)
         return self.pipeline(x)
     
 
@@ -82,21 +64,4 @@ class InceptionBlock(nn.Module):
         m = self.branch_mid(x)
         w = self.branch_wide(x)
         return torch.cat([n, m, w], dim = 1) # stack along channel dimension
-
-# also inspired by Kaviri and Vinjamuri
-# code taken from Claude
-class ResidualBlock(nn.Module):
-    def __init__(self, channels, kernel_size=9, padding=4):
-        super().__init__()
-        self.block = nn.Sequential(
-            nn.Conv1d(channels, channels, kernel_size=kernel_size, padding=padding),
-            nn.BatchNorm1d(channels),
-            nn.ReLU(),
-            nn.Conv1d(channels, channels, kernel_size=kernel_size, padding=padding),
-            nn.BatchNorm1d(channels),
-        )
-        self.relu = nn.ReLU()
-
-    def forward(self, x):
-        return self.relu(self.block(x) + x)
     
