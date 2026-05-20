@@ -25,17 +25,26 @@ def extract_features(trial):
     Extract spectral features from a single trial.
 
     For each channel, computes band power in alpha, beta, mu, and gamma bands
-    via Welch's PSD method (1-50 Hz). Appends C3-C4 laterality asymmetry
-    for each band (positive = C3 dominant / left hand, negative = C4 dominant
-    / right hand).
+    via Welch's PSD method (1-50 Hz).
+    
+    Features (per channel):
+        - Per-channel band power: 4 bands x n_channels
+        - C3-C4 laterality asymmetry: 4 bands (positive = C3 dominant / left
+          hand, negative = C4 dominant / right hand)
+        - Total motor cortex power (C3+C4): 4 bands — high at rest, suppressed
+          during motor imagery (ERD marker)
+        - Beta/mu ratio for C3, C4, and combined: captures movement-related
+          beta suppression relative to mu rhythm
 
     Args:
         trial (torch.Tensor): Shape (n_channels, n_times).
 
     Returns:
-        list[torch.Tensor]: 16 scalar features —
-            4 bands x 3 channels (per-channel power) +
-            4 bands x 1 (C3-C4 asymmetry).
+        list[torch.Tensor]: scalar features —
+            4 bands x n_channels (per-channel power)
+            + 4 bands (C3-C4 asymmetry)
+            + 4 bands (C3+C4 total motor power)
+            + 3 scalars (beta/mu ratio: C3, C4, combined)
     """
     features = []
     band_powers = {} # per-channel band powers for assymetry calc
@@ -70,6 +79,59 @@ def extract_features(trial):
     gamma_sym = band_powers[C3_IDX]["gamma"] - band_powers[C4_IDX]["gamma"]
 
     features += [alpha_sym, beta_sym, mu_sym, gamma_sym]
+
+    # Add rest-relevant features
+    # Used Claude to implement
+    # Total motor cortex power C3+C4 (rest vs movement discriminator)
+    # ERD: rest = high mu/beta, any movement = suppressed mu/beta on both sides
+    alpha_total = band_powers[C3_IDX]["alpha"] + band_powers[C4_IDX]["alpha"]
+    beta_total  = band_powers[C3_IDX]["beta"]  + band_powers[C4_IDX]["beta"]
+    mu_total    = band_powers[C3_IDX]["mu"]    + band_powers[C4_IDX]["mu"]
+    gamma_total = band_powers[C3_IDX]["gamma"] + band_powers[C4_IDX]["gamma"]
+
+    features += [alpha_total, beta_total, mu_total, gamma_total]
+
+    # Beta/mu ratio (movement suppresses beta relative to mu)
+    # Low ratio = active motor imagery, high ratio = rest
+    eps = torch.tensor(1e-8)
+    beta_mu_C3       = band_powers[C3_IDX]["beta"] / (band_powers[C3_IDX]["mu"] + eps)
+    beta_mu_C4       = band_powers[C4_IDX]["beta"] / (band_powers[C4_IDX]["mu"] + eps)
+    beta_mu_combined = beta_total / (mu_total + eps)
+
+    features += [beta_mu_C3, beta_mu_C4, beta_mu_combined]
+
+    # Used Claude to implement early/late window power
+    # ERD ratio — early vs late window power on C3/C4
+    # ERD is strongest 500ms-1500ms post-cue; compare to baseline window
+    split = trial.shape[1] // 2
+    for ch_idx in [C3_IDX, C4_IDX]:
+        early = trial[ch_idx, :split]
+        late  = trial[ch_idx, split:]
+        freqs = None
+        for segment in (early, late):
+            psds, freqs = psd_array_welch(segment.numpy(), sfreq=SFREQ,
+                                           fmin=1, fmax=50, verbose=False)
+            psds  = torch.tensor(psds)
+            freqs = torch.tensor(freqs)
+            mu_pow   = _band_power(psds, freqs, *MU_BAND)
+            beta_pow = _band_power(psds, freqs, *BETA_BAND)
+            features += [mu_pow, beta_pow]
+
+        # ERD = suppression ratio: late/early (low = strong ERD = active imagery)
+        early_psds, _ = psd_array_welch(early.numpy(), sfreq=SFREQ, fmin=1, fmax=50, verbose=False)
+        late_psds,  _ = psd_array_welch(late.numpy(),  sfreq=SFREQ, fmin=1, fmax=50, verbose=False)
+        early_psds, late_psds = torch.tensor(early_psds), torch.tensor(late_psds)
+        freqs = torch.as_tensor(freqs)
+        for band, brange in [("mu", MU_BAND), ("beta", BETA_BAND)]:
+            early_pow = _band_power(early_psds, freqs, *brange)
+            late_pow  = _band_power(late_psds,  freqs, *brange)
+            features.append(late_pow / (early_pow + eps))  # ERD ratio
+
+    # Log power (stabilizes variance across subjects)
+    for ch_idx in [C3_IDX, C4_IDX]:
+        for band in ["mu", "beta"]:
+            features.append(torch.log(band_powers[ch_idx][band] + eps))
+
     return features
 
 def build_feature_matrix(data):
@@ -100,22 +162,40 @@ def build_feature_matrix(data):
         
     feature_rows = torch.stack(feature_rows)
     subject_ids = torch.tensor(subject_ids)
-    
-    # Standardize per participant
-    normalized = torch.zeros_like(feature_rows)
+
+    return feature_rows, torch.tensor(labels, dtype=torch.long), subject_ids
+
+
+def normalize(X_train, X_test, subject_ids_train, subject_ids_test):
+    X_train, train_stats = per_subject_normalize(X_train, subject_ids_train)
+    X_test, _ = per_subject_normalize(X_test, subject_ids_test, stats=train_stats)
+
+    # Global standardization
+    global_mean = X_train.mean(dim=0)
+    global_std = X_train.std(dim=0)
+    X_train = (X_train - global_mean) / (global_std + 1e-8)
+    X_test = (X_test - global_mean) / (global_std + 1e-8)
+
+    return X_train, X_test
+
+def per_subject_normalize(X, subject_ids, stats=None):
+    # Standardize per subject
+    normalized = torch.zeros_like(X)
+    fitted_stats = {}
     for subj in subject_ids.unique():
         idx = torch.where(subject_ids == subj)[0]
-        subj_feats = feature_rows[idx]
-        normalized[idx] = (subj_feats - torch.mean(subj_feats, dim=0)) / (torch.std(subj_feats, dim=0) + 1e-8)
-    
-    # Global standardization
-    global_mean = torch.mean(normalized, dim=0)
-    global_std = torch.std(normalized, dim=0)
-    normalized = (normalized - global_mean) / (global_std + 1e-8)
+        if stats is None:
+            mean = X[idx].mean(dim=0)
+            std = X[idx].std(dim=0)
+            fitted_stats[subj.item()] = (mean, std)
+        else:
+            # use train stats for unseen test subjects
+            mean, std = stats.get(subj.item(), (X[idx].mean(dim=0), X[idx].std(dim=0)))
+            
+        normalized[idx] = (X[idx] - mean) / (std + 1e-8)
+    return normalized, fitted_stats
 
-    X = normalized
-    y = torch.tensor(labels, dtype=torch.long)
-    return X, y
+
 
 def _band_power(psds, freqs, fmin, fmax):
     '''# Return mean PSD for frequencies in [fmin, fmax]'''

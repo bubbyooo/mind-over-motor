@@ -1,12 +1,11 @@
+# DEPRECATED
+
 # Log-reg model training
-# Run from project root with `python train.py`
+# Run from project root with `python train-log-reg.py`
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent / 'src'))
 
-import random
-from xml.parsers.expat import model
-import torch
 
 from epocher import Data_Epoch
 from dataset import subject_split
@@ -14,7 +13,6 @@ from evaluation import plot_confusion_matrix
 from features import build_feature_matrix
 from logistic_regression_model import BinaryLogReg, GradientDescentOptimizer, binary_cross_entropy, accuracy
 
-import numpy as np
 
 DATA_DIR     = "data"
 SEED         = 42
