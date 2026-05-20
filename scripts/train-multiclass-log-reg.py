@@ -4,14 +4,13 @@ import os
 import pickle
 import sys
 from pathlib import Path
-from xml.parsers.expat import model
 
 sys.path.append(str(Path(__file__).parent.parent / 'src'))
 
 from matplotlib.pylab import rint
 import torch
 
-from dataset import EEGDataset, random_split
+from dataset import random_split
 from epocher import Data_Epoch
 from evaluation import plot_confusion_matrix_cnn, plot_loss
 from features import build_feature_matrix, normalize
@@ -34,7 +33,7 @@ def main():
     # Build dataset
     print("Loading and epoching EDF files...")
     dataset = Data_Epoch()
-    dataset = dataset.build_dataset(DATA_DIR)
+    dataset = dataset.build_logreg_dataset(DATA_DIR)
     print(f"Total trials: {dataset.__len__()}")
 
     # Split
@@ -105,7 +104,7 @@ def main():
 
     if os.path.exists("logreg_model.pth"):  
         model = torch.load("logreg_model.pth")
-    plot_confusion_matrix_cnn(model, X_test, y_test)
+
     print("train accuracy: ", accuracy(model, X_train, y_train))
     print("test accuracy: ", accuracy(model, X_test, y_test))
 
