@@ -102,14 +102,15 @@ def main():
     plot_loss(train_losses, test_losses)
 
 
-    if os.path.exists("logreg_model.pth"):  
-        model = torch.load("logreg_model.pth")
+    if os.path.exists("logreg_model.pth"):
+        with open("logreg_model.pth", "rb") as f:
+            model = pickle.load(f)
 
     print("train accuracy: ", accuracy(model, X_train, y_train))
     print("test accuracy: ", accuracy(model, X_test, y_test))
 
     # saves model via pickle for version control
-    with open("model_in_prog.pkl", "wb") as f:
+    with open("model_test.pkl", "wb") as f:
         pickle.dump(model, f)
  
  
