@@ -19,8 +19,9 @@ DATA_DIR     = "data"
 LR           = 0.00003  # learning rate
 EPOCHS       = 1000
 BATCH_SIZE   = 68
-PATIENCE     = 20       # number of epochs without improvement before early stopping
-TRAIN        = False    # set to False to skip training and load saved model
+PATIENCE     = 30       # number of epochs without improvement before early stopping
+TRAIN        = True    # set to False to skip training and load saved model\
+CLASS_WEIGHTS = torch.tensor([1.2, 1.5, 1])
 
 
 def main():
@@ -43,7 +44,10 @@ def main():
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, mode='min', patience=5, factor=0.5
 )
-    loss_fn = nn.CrossEntropyLoss()
+        # Weighted cross-entropy to penalize left/right errors more than rest
+
+    loss_fn = nn.CrossEntropyLoss(weight=CLASS_WEIGHTS)
+
     # train the model
     total_loss = 0
     if TRAIN:
@@ -57,6 +61,7 @@ def main():
         for epoch in range(EPOCHS): 
             train_batch_losses = []
 
+            # --- Training pass ---
             model.train() # enable dropout during training (per claude)
             for X_batch, y_batch in train_loader:
                 optimizer.zero_grad()
@@ -70,7 +75,7 @@ def main():
             epoch_train_loss = sum(train_batch_losses)/len(train_batch_losses)
             train_losses.append(epoch_train_loss)
 
-            # Evaluate on test set
+            # --- Validation pass ---
             model.eval() # disable dropout for evaluation (per claude)
             with torch.no_grad():
                 val_y_pred = model(X_test)
@@ -86,7 +91,7 @@ def main():
             if val_loss < best_val:
                 best_val = val_loss
                 strikes = 0
-                torch.save(model.state_dict(), "best_model_of_run35.pth")
+                torch.save(model.state_dict(), "best_model_so_far.pth")
             else:
                 strikes += 1
                 if strikes >= PATIENCE:
@@ -96,9 +101,8 @@ def main():
             scheduler.step(val_loss)
         
         plot_loss(train_losses, val_losses)
-      #  plot_confusion_matrix_cnn(model, X_test, y_test)
     
-    model.load_state_dict(torch.load("best_model_of_run35.pth"))
+    model.load_state_dict(torch.load("best_model_so_far.pth"))
     model.eval()
     with torch.no_grad():
         plot_confusion_matrix_cnn(model, X_test, y_test)
@@ -106,7 +110,7 @@ def main():
         print("test accuracy: ", accuracy(model, X_test, y_test))
 
     # saves model via pickle for version control
-    with open("model35.pkl", "wb") as f:
+    with open("model_update.pkl", "wb") as f:
         pickle.dump(model, f)
 
 if __name__ == "__main__":
