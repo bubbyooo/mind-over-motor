@@ -17,7 +17,9 @@ def plot_confusion_matrix(model, X_test, y_test):
     y_pred = (preds >= 0.5).int().detach().cpu().numpy()
 
     cm = confusion_matrix(y_true, y_pred)
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=["Left", "Right", "Rest"], # help from claude on the tick labelling
+            yticklabels=["Left", "Right", "Rest"])
     plt.xlabel("Predicted")
     plt.ylabel("Actual")
     plt.title("Confusion Matrix")
@@ -32,7 +34,10 @@ def plot_confusion_matrix_cnn(model, X_test, y_test):
     y_true = y_test.cpu().numpy()
     y_pred = preds.argmax(dim=1).detach().cpu().numpy()
     cm = confusion_matrix(y_true, y_pred)
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=["Left", "Right", "Rest"], # help from claude on the tick labelling
+            yticklabels=["Left", "Right", "Rest"])
+    plt.xlabel("Predicted")
     plt.xlabel("Predicted")
     plt.ylabel("Actual")
     plt.title("Confusion Matrix")
